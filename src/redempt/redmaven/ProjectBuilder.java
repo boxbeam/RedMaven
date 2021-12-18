@@ -1,8 +1,6 @@
 package redempt.redmaven;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,7 +27,7 @@ public class ProjectBuilder {
 	public static ProjectInfo getInfo(Path path, Path root) {
 		path = root.relativize(path);
 		String name = path.getFileName().toString();
-		String extension = HttpUtils.getFileExtension(name);
+		String extension = Utils.getFileExtension(name);
 		if (endings.contains(extension)) {
 			path = path.getParent();
 		}
@@ -76,14 +74,14 @@ public class ProjectBuilder {
 			Path buildLog = tmpDir.resolve("build.log");
 			System.out.println("Build dir: " + tmpDir);
 			String[] env = new String[] {"BUILD_VERSION", info.version()};
-			if (!executeCommand(tmpDir, buildLog, env, "git clone " + repoInfo.url())) {
+			if (!Utils.executeCommand(tmpDir, buildLog, env, "git clone " + repoInfo.url())) {
 				return false;
 			}
 			Path workingDir = Files.list(tmpDir).filter(Files::isDirectory).findFirst().get();
 			List<String> commands = new ArrayList<>();
 			commands.add("git checkout " + info.version());
 			Collections.addAll(commands, repoInfo.buildCommands());
-			if (!executeCommands(workingDir, buildLog, env, commands)) {
+			if (!Utils.executeCommands(workingDir, buildLog, env, commands)) {
 				return false;
 			}
 			if (!copyArtifacts(info)) {
@@ -91,12 +89,12 @@ public class ProjectBuilder {
 			}
 			Files.copy(buildLog, dest.resolve("build.log"));
 			DocsBuilder.buildDocs(workingDir, dest, info);
-			deleteRecursive(tmpDir);
+			Utils.deleteRecursive(tmpDir);
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
 			if (tmpDir != null) {
-				deleteRecursive(tmpDir);
+				Utils.deleteRecursive(tmpDir);
 			}
 		}
 		return false;
@@ -115,39 +113,6 @@ public class ProjectBuilder {
 			Files.copy(file, destination.resolve(file.getFileName().toString()), StandardCopyOption.REPLACE_EXISTING);
 		}
 		return true;
-	}
-	
-	public static boolean executeCommands(Path path, Path log, String[] env, List<String> commands) throws IOException {
-		for (String cmd : commands) {
-			if (!executeCommand(path, log, env, cmd)) {
-				return false;
-			}
-		}
-		return true;
-	}
-	
-	public static boolean executeCommand(Path path, Path log, String[] env, String command) throws IOException {
-		ProcessBuilder proc = new ProcessBuilder();
-		for (int i = 0; i < env.length - 1; i += 2) {
-			proc.environment().put(env[i], env[i + 1]);
-		}
-		Redirect redirect = Redirect.appendTo(log.toFile());
-		proc.command(command.split(" ")).directory(path.toFile()).redirectError(redirect).redirectOutput(redirect);
-		Process process = proc.start();
-		try {
-			return process.waitFor() == 0;
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-	
-	public static void deleteRecursive(Path path) {
-		try {
-			Files.walk(path).sorted(Comparator.comparingInt(p -> -p.getNameCount())).collect(Collectors.toList()).forEach(WrappedConsumer.wrap(Files::delete));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 	
 }

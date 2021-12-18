@@ -41,7 +41,7 @@ public class RedMaven {
 	public static void main(String[] args) throws Exception {
 		loadRepos();
 		HttpServer server = ServerBuilder.createServer(Paths.get("redmaven.properties"));
-		server.createContext("/", HttpUtils.wrapHandler(exchange -> {
+		server.createContext("/", Utils.wrapHandler(exchange -> {
 			String p = exchange.getRequestURI().toString().replaceAll("^/", "");
 			System.out.println("Got request for: " + p);
 			Path path = repo.resolve(Paths.get(p));
@@ -57,9 +57,9 @@ public class RedMaven {
 				}
 			}
 			if (Files.isDirectory(path)) {
-				HttpUtils.sendDirectoryListing(exchange, path, repo);
+				Utils.sendDirectoryListing(exchange, path, repo);
 			} else {
-				HttpUtils.sendFile(exchange, path);
+				Utils.sendFile(exchange, path);
 			}
 		}));
 		System.out.println("Starting");

@@ -26,6 +26,9 @@ public class ProjectBuilder {
 	
 	public static ProjectInfo getInfo(Path path, Path root) {
 		path = root.relativize(path);
+		if (path == null) {
+			return null;
+		}
 		String name = path.getFileName().toString();
 		String extension = Utils.getFileExtension(name);
 		if (endings.contains(extension)) {

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.function.ToIntFunction;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -60,19 +61,24 @@ public class Utils {
 		exchange.close();
 	}
 	
+	private static Comparator<Path> pathSorter = Comparator.comparingInt((ToIntFunction<Path>) p -> Files.isDirectory(p) ? 0 : 1).thenComparing(Path::toString);
+	
 	public static void sendDirectoryListing(HttpExchange exchange, Path path, Path root) throws IOException {
 		if (!Files.exists(path)) {
 			exchange.sendResponseHeaders(404, 0);
 			exchange.close();
 			return;
 		}
-		String listing = Files.list(path).sorted(Comparator.comparingInt(p -> Files.isDirectory(p) ? 0 : 1)).map(root::relativize).map(p -> {
+		String listing = Files.list(path).sorted().map(root::relativize).map(p -> {
 			String href = p.toString();
 			if (!href.startsWith("/")) {
 				href = "/" + href;
 			}
 			return "<a href=" + href + ">" + p.getFileName().toString() + "</a>";
 		}).collect(Collectors.joining("<br>"));
+		if (!path.equals(root)) {
+			listing = "<a href=../>..</a><br>" + listing;
+		}
 		sendResponse(exchange, 200, listing);
 	}
 	

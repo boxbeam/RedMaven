@@ -28,15 +28,14 @@ import java.util.concurrent.Executors;
 
 public class ServerBuilder {
 	
-	private static String defaultConfig =
-"""
-address: localhost
-port: 80
-backlog: 20
-ssl: false
-keyStorePath: none
-keyStorePassword: none
-""";
+	private static String defaultConfig = """
+			address: localhost
+			port: 80
+			backlog: 20
+			ssl: false
+			keyStorePath: none
+			keyStorePassword: none
+			""".stripIndent();
 	
 	public static HttpServer createServer(Path options) throws IOException, NoSuchAlgorithmException, KeyStoreException, CertificateException, UnrecoverableKeyException, KeyManagementException {
 		Executor exec = Executors.newCachedThreadPool();

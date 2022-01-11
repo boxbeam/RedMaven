@@ -45,6 +45,9 @@ public class ProjectBuilder {
 	}
 	
 	public static boolean build(ProjectInfo info) {
+		if (!sanitize(info.version())) {
+			return false;
+		}
 		if (building.containsKey(info)) {
 			try {
 				return building.get(info).get();
@@ -60,8 +63,8 @@ public class ProjectBuilder {
 		return success;
 	}
 	
-	private static String sanitize(String input) {
-		return input.replaceAll("[^a-zA-Z0-9._-]", "");
+	private static boolean sanitize(String input) {
+		return input.matches("^[a-zA-Z0-9._-]+$");
 	}
 	
 	private static boolean build0(ProjectInfo info) {
@@ -86,7 +89,7 @@ public class ProjectBuilder {
 			}
 			Path workingDir = Files.list(tmpDir).filter(Files::isDirectory).findFirst().get();
 			List<String> commands = new ArrayList<>();
-			commands.add("git checkout " + sanitize(info.version()));
+			commands.add("git checkout " + info.version());
 			Collections.addAll(commands, repoInfo.buildCommands());
 			if (!Utils.executeCommands(workingDir, buildLog, env, commands)) {
 				return false;

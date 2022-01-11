@@ -60,6 +60,10 @@ public class ProjectBuilder {
 		return success;
 	}
 	
+	private static String sanitize(String input) {
+		return input.replaceAll("[^a-zA-Z0-9._-]", "");
+	}
+	
 	private static boolean build0(ProjectInfo info) {
 		Path tmpDir = null;
 		try {
@@ -82,7 +86,7 @@ public class ProjectBuilder {
 			}
 			Path workingDir = Files.list(tmpDir).filter(Files::isDirectory).findFirst().get();
 			List<String> commands = new ArrayList<>();
-			commands.add("git checkout " + info.version());
+			commands.add("git checkout " + sanitize(info.version()));
 			Collections.addAll(commands, repoInfo.buildCommands());
 			if (!Utils.executeCommands(workingDir, buildLog, env, commands)) {
 				return false;
